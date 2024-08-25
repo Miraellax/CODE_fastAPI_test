@@ -1,0 +1,8 @@
+fastapi~=0.112.1
+uvicorn
+sqlalchemy~=2.0.32
+pydantic~=2.8.2
+asyncpg
+psycopg2
+alembic~=1.13.2
+aiohttp
