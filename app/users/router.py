@@ -1,23 +1,34 @@
-from fastapi import APIRouter
-from app.users.schema import UserBase, UserCreate
+from typing import Annotated, Dict, List, Union, Type
 
-router = APIRouter(prefix='/users')
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBasicCredentials
+from sqlalchemy.orm import Session
 
 
-# @router.post("/add/")
-# async def add_note(note: NoteCreate) -> dict:
-#     check = await MajorsDAO.add(**major.dict())
-#     if check:
-#         return {"message": "Факультет успешно добавлен!", "major": major}
-#     else:
-#         return {"message": "Ошибка при добавлении факультета!"}
+from app.database import get_db
+from app.notes import schema as notes_schema
+from app.users import dao as users_dao
+from app.notes import dao as notes_dao
+from app.users.dao import check_auth
 
-# @app.get('/stock/{symbol}', response_model=schemas.Stock, status_code=200)
-# def get_stock(symbol: str, db: Session = Depends(get_db)) -> models.Stock:
-#     db_stock = crud.get_stock(db, symbol=symbol)
-#     if db_stock is None:
-#         raise HTTPException(
-#             status_code=404, detail=f"No stock {symbol} found."
-#         )
-#
-#     return db_stock
+router = APIRouter(prefix="/users")
+
+
+@router.get("/current")
+def read_current_user(
+    credentials: Annotated[HTTPBasicCredentials, Depends(check_auth)]
+) -> Dict:
+    if credentials is not None:
+        return {"username": credentials.username, "password": credentials.password}
+
+
+@router.get("/current/notes", response_model=List[notes_schema.Note])
+def get_current_user_notes(
+    credentials: Annotated[HTTPBasicCredentials, Depends(check_auth)],
+    db: Session = Depends(get_db),
+) -> Union[List[Type[notes_schema.Note]], None]:
+    if credentials is not None:
+        # В случае отсутствия доступа check_auth выдаст исключение
+        owner_id = users_dao.get_user_id(db, credentials)
+        if owner_id is not None:
+            return notes_dao.get_notes_by_owner(db, owner_id)

@@ -1,15 +1,55 @@
-from fastapi import APIRouter
+from typing import Union, Annotated
+
+from fastapi import Depends, status, HTTPException
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
-from app.notes import schema as note_schema
+from app.database import get_db
+from app.models import models
 from app.users import schema as user_schema
 
-router = APIRouter(prefix='/user')
 
-# # TODO подумать как юзера не по айди вызывать, а по аутентификации
-# @router.get("/{user_id}/notes", response_model=schema.Note)
-# def read_note(note_id: int, db: Session = Depends(get_db)):
-#     db_note = dao.get_note(db, note_id=note_id)
-#     if db_note is None:
-#         raise HTTPException(status_code=404, detail="Note is not found")
-#     return db_note
+security = HTTPBasic()
+
+
+def check_auth(
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+    db: Annotated[Session, Depends(get_db)],
+) -> HTTPBasicCredentials:
+
+    db_user = (
+        db.query(models.User)
+        .filter(
+            models.User.username == credentials.username
+            and models.User.password == credentials.password
+        )
+        .first()
+    )
+
+    if db_user is None:
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    return credentials
+
+
+def get_user(db: Session, note_id: int) -> Union[user_schema.User, None]:
+    return db.query(models.User).filter(models.User.id == note_id).first()
+
+
+def get_user_id(db: Session, credentials: HTTPBasicCredentials) -> Union[int, None]:
+    user = (
+        db.query(models.User)
+        .filter(
+            models.User.username == credentials.username
+            and models.User.password == credentials.password
+        )
+        .first()
+    )
+    if user is not None:
+        return user.id
+    return

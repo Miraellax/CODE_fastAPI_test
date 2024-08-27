@@ -1,44 +1,29 @@
-from typing import List
+from typing import Annotated, Union
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.notes import schema, dao
-from app.notes.schema import NoteBase, NoteCreate, Note
+from app.notes import dao as notes_dao
+from app.users import dao as users_dao
+from app.notes import schema as notes_schema
+from app.models.models import Note
 
-router = APIRouter(prefix='/notes')
-
-# @router.post("/add/")
-# async def add_note(note: NoteCreate) -> dict:
-#     check = await MajorsDAO.add(**major.dict())
-#     if check:
-#         return {"message": "Факультет успешно добавлен!", "major": major}
-#     else:
-#         return {"message": "Ошибка при добавлении факультета!"}
-
-# @app.get('/stock/{symbol}', response_model=schemas.Stock, status_code=200)
-# def get_stock(symbol: str, db: Session = Depends(get_db)) -> models.Stock:
-#     db_stock = crud.get_stock(db, symbol=symbol)
-#     if db_stock is None:
-#         raise HTTPException(
-#             status_code=404, detail=f"No stock {symbol} found."
-#         )
-#
-#     return db_stock
-
-@router.get("/{note_id}", response_model=schema.Note)
-def read_note(note_id: int, db: Session = Depends(get_db)):
-    db_note = dao.get_note(db, note_id=note_id)
-    if db_note is None:
-        raise HTTPException(status_code=404, detail="Note is not found")
-    return db_note
+router = APIRouter(prefix="/notes")
 
 
+@router.post("/post/{owner_id}", response_model=notes_schema.Note)
+def post_note(
+    note: notes_schema.NoteCreate,
+    credentials: Annotated[HTTPBasicCredentials, Depends(users_dao.check_auth)],
+    db: Session = Depends(get_db),
+) -> Union[Note, None]:
+    if credentials is not None:
+        # При отсутствии доступа check_auth выдаст исключение
+        db_note = notes_dao.create_note(db, note=note)
+        return db_note
 
 
-# @router.post("/", response_model=Note)
-# async def create_note(note: NoteIn):
-#     query = notes.insert().values(text=note.text, completed=note.completed)
-#     last_record_id = await database.execute(query)
-#     return {**note.dict(), "id": last_record_id}
+# curl -X "POST" "http://127.0.0.1:8000/notes/post/{owner_id}" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"content\": \"hepl me\", \"owner_id\": 1}" --user "first:111"
+# out -> {"content":"help me","owner_id":1,"id":7}

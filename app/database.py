@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.models.models import Note, User
+from app.models.models import User, Note
 
 DB_USER = "postgres"
 DB_PASSWORD = "123963"
@@ -9,7 +9,7 @@ DB_HOST = "localhost"
 DB_PORT = "5432"
 DB_NAME = "CODE_fastapi_db"
 
-DATABASE_URL = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 engine = create_engine(DATABASE_URL)
 session_maker = sessionmaker(bind=engine, autocommit=False, autoflush=False)
@@ -26,12 +26,12 @@ def get_db():
 users = [
     User(id=1, username="first", password="111"),
     User(id=2, username="second", password="222"),
-    User(id=3, username="third", password="333")
+    User(id=3, username="third", password="333"),
 ]
 notes = [
-    Note(id=1, owner_id=2, content="test note text"),
-    Note(id=2, owner_id=3, content="one more"),
-    Note(id=3, owner_id=3, content="another good note")
+    Note(owner_id=2, content="test note text"),
+    Note(owner_id=3, content="one more"),
+    Note(owner_id=3, content="another good note"),
 ]
 
 
@@ -40,20 +40,16 @@ def init_data():
         try:
             for user in users:
                 session.add(user)
+                session.commit()
         except Exception as e:
             session.rollback()
             raise e
-        else:
-            session.commit()
 
     with session_maker() as session:
         try:
             for note in notes:
                 session.add(note)
+                session.commit()
         except Exception as e:
             session.rollback()
             raise e
-        else:
-            session.commit()
-
-
