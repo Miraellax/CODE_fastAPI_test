@@ -27,7 +27,6 @@ def check_auth(
     )
 
     if db_user is None:
-
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -37,7 +36,7 @@ def check_auth(
     return credentials
 
 
-def get_user(db: Session, note_id: int) -> Union[user_schema.User, None]:
+def get_user_by_note_id(db: Session, note_id: int) -> Union[user_schema.User, None]:
     return db.query(models.User).filter(models.User.id == note_id).first()
 
 

@@ -25,5 +25,19 @@ def post_note(
         return db_note
 
 
-# curl -X "POST" "http://127.0.0.1:8000/notes/post/{owner_id}" -H "accept: application/json" -H "Content-Type: application/json" -d "{\"content\": \"hepl me\", \"owner_id\": 1}" --user "first:111"
-# out -> {"content":"help me","owner_id":1,"id":7}
+@router.post("/post/current", response_model=notes_schema.Note)
+def post_note_current(
+    note_content: str,
+    credentials: Annotated[HTTPBasicCredentials, Depends(users_dao.check_auth)],
+    db: Session = Depends(get_db),
+) -> Union[Note, None]:
+    if credentials is not None:
+        # При отсутствии доступа check_auth выдаст исключение
+        db_user_id = users_dao.get_user_id(db, credentials)
+
+        if db_user_id is not None:
+            db_note = notes_dao.create_note(
+                db,
+                note=notes_schema.NoteCreate(owner_id=db_user_id, content=note_content),
+            )
+            return db_note
