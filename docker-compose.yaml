@@ -1,0 +1,46 @@
+services:
+  postgres:
+    container_name: CODE_fastAPI_db
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      #      - .postgres:/var/lib/postgres/data
+      - .postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_NAME}
+      #      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_NAME} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - postgres
+  server:
+    container_name: CODE_fastAPI_test
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_NAME: ${POSTGRES_NAME}
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    networks:
+      - postgres
+
+volumes:
+  CODE_fastAPI_test:
+
+networks:
+  postgres:
+    driver: bridge

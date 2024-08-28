@@ -1,16 +1,22 @@
+import os
+import dotenv
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.models.models import User, Note
 
-DB_USER = "postgres"
-DB_PASSWORD = "123963"
-DB_HOST = "localhost"
-DB_PORT = "5432"
-DB_NAME = "CODE_fastapi_db"
+dotenv.load_dotenv()
+
+DB_USER = os.getenv("POSTGRES_USER")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+DB_HOST = os.getenv("POSTGRES_HOST")
+DB_PORT = os.getenv("POSTGRES_PORT")
+DB_NAME = os.getenv("POSTGRES_NAME")
+
 
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
+print(DATABASE_URL)
 engine = create_engine(DATABASE_URL)
 session_maker = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 

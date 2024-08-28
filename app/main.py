@@ -20,7 +20,7 @@ app = FastAPI()
 
 @app.get("/")
 def main():
-    return FileResponse("templates/index.html")
+    return FileResponse("app/templates/index.html")
 
 
 app.include_router(router_users)

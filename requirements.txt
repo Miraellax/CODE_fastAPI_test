@@ -1,4 +1,4 @@
-fastapi~=0.112.1
+fastapi[standart]
 uvicorn
 sqlalchemy~=2.0.32
 pydantic~=2.8.2
@@ -6,3 +6,4 @@ asyncpg
 psycopg2
 alembic~=1.13.2
 aiohttp
+python-dotenv
