@@ -17,11 +17,4 @@ if init_db:
 
 app = FastAPI()
 
-
-@app.get("/")
-def main():
-    return FileResponse("app/templates/index.html")
-
-
 app.include_router(router_users)
-app.include_router(router_notes)
